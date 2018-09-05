@@ -84,6 +84,7 @@ public class WelcomeController {
 
         } catch (Exception e){
             model.addAttribute("message","Upload Failed of "+file.getOriginalFilename());
+            e.printStackTrace();
         }
         return "index";
     }
