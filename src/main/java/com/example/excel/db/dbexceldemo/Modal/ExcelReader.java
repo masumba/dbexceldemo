@@ -1,60 +1,62 @@
 package com.example.excel.db.dbexceldemo.Modal;
 
-import com.example.excel.db.dbexceldemo.Repository.ExcelDbAppRepository;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import javax.persistence.*;
 
+@Entity
+@Table(name = "excel_test")
 public class ExcelReader {
 
-    @Autowired
-    ExcelDbAppRepository appRepo;
-    public static void main(String args[]) throws IOException {
-        /**/
-        FileInputStream file = new FileInputStream(new File("upload-dir/data - Copy.xlsx"));
-        XSSFWorkbook workbook = new XSSFWorkbook(file);
-        XSSFSheet sheet = workbook.getSheetAt(0);
 
-        Row row;
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    public int id;
 
-        for (int i=1; i<=sheet.getLastRowNum(); i++){
-            row = (Row) sheet.getRow(i);
+    @Column(name = "name")
+    public String name;
 
-            String id;
-            if (row.getCell(0) == null){
-                id="0";
-            } else {
-                id=row.getCell(0).toString();
-            }
+    @Column(name = "address")
+    public String address;
 
-            String name;
-            if (row.getCell(1) == null){
-                name="null";
-            } else {
-                name = row.getCell(1).toString();
-            }
+    public ExcelReader() {
+    }
 
-            String address;
-            if (row.getCell(2) == null){
-                address = "null";
-            } else{
-                address=row.getCell(2).toString();
-            }
+    public ExcelReader(int id, String name, String address) {
+        this.id = id;
+        this.name = name;
+        this.address = address;
+    }
 
-            ExcelDbApp std = new ExcelDbApp();
-            std.setName(name);
-            std.setAddress(address);
-            /*appRepo.save(std);*/
+    public int getId() {
+        return id;
+    }
 
-            System.out.println(id+"***"+name+"***"+address);
+    public void setId(int id) {
+        this.id = id;
+    }
 
-        }
+    public String getName() {
+        return name;
+    }
 
-        file.close();
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    @Override
+    public String toString() {
+        return "ExcelReader{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", address='" + address + '\'' +
+                '}';
     }
 }

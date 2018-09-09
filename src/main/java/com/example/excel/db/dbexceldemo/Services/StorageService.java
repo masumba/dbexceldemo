@@ -1,4 +1,5 @@
-package com.example.excel.db.dbexceldemo.Service;
+package com.example.excel.db.dbexceldemo.Services;
+
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,24 +22,24 @@ public class StorageService {
     private final Path rootLocation = Paths.get("upload-dir");
 
     public void store(MultipartFile file){
-        try {
+        try{
             Files.copy(file.getInputStream(), this.rootLocation.resolve(file.getOriginalFilename()));
-        } catch (Exception e) {
-            throw new RuntimeException("Fail!");
+        } catch (Exception e){
+            throw new RuntimeException("Fail! Service Error: "+e);
         }
     }
 
-    public Resource loadFile(String filename) {
+    public Resource loadFile(String filename){
         try {
             Path file = rootLocation.resolve(filename);
             Resource resource = new UrlResource(file.toUri());
-            if (resource.exists() || resource.isReadable()){
+            if (((UrlResource) resource).exists() || ((UrlResource) resource).isReadable()){
                 return resource;
             } else {
-                throw new RuntimeException("Failed!");
+                throw new RuntimeException("Failed to load file!");
             }
         } catch (MalformedURLException e){
-            throw new RuntimeException("FAIL");
+            throw new RuntimeException("Fail Load Error: "+e);
         }
     }
 
@@ -50,7 +51,8 @@ public class StorageService {
         try{
             Files.createDirectory(rootLocation);
         } catch (IOException e){
-            throw new RuntimeException("Could Not Create Storage");
+            throw new RuntimeException("Could Not Create Storage: "+e);
         }
     }
+
 }
