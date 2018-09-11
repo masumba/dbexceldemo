@@ -10,37 +10,54 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
+import java.util.ArrayList;
 
 @Service
 public class XMLReader {
     @Autowired
-    MyClass myClass = new MyClass();
+    SqlValues sqlValues = new SqlValues();
 
-    public MyClass display(String xmlFileName){
+    public SqlValues display(String xmlFileName){
+        String tableName = null;
+        StringBuilder tableColumns = new StringBuilder();
+        ArrayList<Object> excelColumnArray = new ArrayList<Object>();
 
-        String docNameFeild = null;
-        String docAddressFeild = null;
-        try {
+        try{
             DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-
             DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
             Document document = documentBuilder.parse(xmlFileName);
             XPath xPath = XPathFactory.newInstance().newXPath();
-            NodeList nodeList = (NodeList)xPath.compile("//ExcelUpload").evaluate(document, XPathConstants.NODESET);
 
-            for (int i=0; i<nodeList.getLength(); i++){
-                docNameFeild = xPath.compile("./name").evaluate(nodeList.item(i));
-                docAddressFeild = xPath.compile("./address").evaluate(nodeList.item(i));
+            /*Gets Table Name*/
+            NodeList tableNodeList = (NodeList)xPath.compile("//Table").evaluate(document, XPathConstants.NODESET);
+            for (int i=0; i<tableNodeList.getLength(); i++){
+                tableName = xPath.compile("./@tableName").evaluate(tableNodeList.item(i));
             }
+            /**/
+
+            /*Gets Database Columns*/
+            tableColumns.append("(");
+            NodeList columnNodeList = (NodeList)xPath.compile("//Column").evaluate(document, XPathConstants.NODESET);
+            for (int i=0;i<columnNodeList.getLength();i++){
+                if (i > 0 ){
+                    tableColumns.append(",");
+                }
+                String columnName = xPath.compile("./@columnName").evaluate(columnNodeList.item(i));
+                tableColumns.append(columnName);
+
+                excelColumnArray.add(xPath.compile("./ExcelValue").evaluate(columnNodeList.item(i)));
+            }
+            tableColumns.append(")");
+
+            sqlValues.setSqlColumns(tableColumns);
+            sqlValues.setSqlTableName(tableName);
+            sqlValues.setSqlExcelColumnArray(excelColumnArray);
+            /**/
+
         } catch (Exception e){
             e.printStackTrace();
         }
 
-        String data[] = {docNameFeild, docAddressFeild};
-
-        myClass.setXml_address_feild(docAddressFeild);
-        myClass.setXml_name_feild(docNameFeild);
-
-        return myClass;
+        return sqlValues;
     }
 }

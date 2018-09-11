@@ -1,7 +1,22 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <ExcelUploads>
     <ExcelUpload>
-        <name>first_name</name>
-        <address>agri_camp_name</address>
+        <Table tableName="excel_test">
+            <Column columnName="agro_block">
+                <ExcelValue>agri_block</ExcelValue>
+            </Column>
+            <Column columnName="address">
+                <ExcelValue>Province</ExcelValue>
+            </Column>
+            <Column columnName="first_name">
+                <ExcelValue>first_name</ExcelValue>
+            </Column>
+            <Column columnName="name">
+                <ExcelValue>surname</ExcelValue>
+            </Column>
+            <Column columnName="subprogram_code">
+                <ExcelValue>subprogram_code</ExcelValue>
+            </Column>
+        </Table>
     </ExcelUpload>
 </ExcelUploads>

@@ -2,7 +2,7 @@ package com.example.excel.db.dbexceldemo.Controller;
 
 
 import com.example.excel.db.dbexceldemo.Modal.ExcelReader;
-import com.example.excel.db.dbexceldemo.Modal.MyClass;
+import com.example.excel.db.dbexceldemo.Modal.SqlValues;
 import com.example.excel.db.dbexceldemo.Modal.XMLReader;
 import com.example.excel.db.dbexceldemo.Repository.ExcelReaderRepository;
 import com.example.excel.db.dbexceldemo.Services.StorageService;
@@ -29,7 +29,7 @@ public class WelcomeController {
 
 
     @Autowired
-    MyClass myClass;
+    SqlValues sqlValues;
 
     @Autowired
     XMLReader xmlReader;
@@ -40,14 +40,16 @@ public class WelcomeController {
     @Autowired
     StorageService storageService;
 
-
     List<String> uploadfiles = new ArrayList<String>();
 
     @RequestMapping("/")
     public ModelAndView doHome(){
         ModelAndView homepage = new ModelAndView("index");
         homepage.addObject("lists",excelReaderRepository.findAll());
-
+        /**/
+        sqlValues = xmlReader.display("ExcelFileReadConfig.xml");
+        //System.out.println(sqlValues.getSqlTableName()+"/"+sqlValues.getSqlColumns()+"\n"+sqlValues.getSqlExcelColumnArray());
+        /**/
         return homepage;
     }
 
@@ -58,93 +60,118 @@ public class WelcomeController {
         return recordslist;
     }
 
-    @RequestMapping(value = "/", method = RequestMethod.POST)
+    @RequestMapping(value = "/",method = RequestMethod.POST)
     public ModelAndView doFileUpload(@RequestParam("file")MultipartFile file){
         ModelAndView mv = new ModelAndView("redirect:/");
 
-        try{
+        ArrayList<Object> targetCellNums = new ArrayList<Object>();
+        ArrayList<Object> targetCellNames = new ArrayList<Object>();
+        ArrayList<Object> targetSqlScript = new ArrayList<Object>();
+        StringBuilder sqlExcelValues = new StringBuilder();
+
+        try {
             storageService.store(file);
             uploadfiles.add(file.getOriginalFilename());
 
-            String DirFileLocation = "upload-dir/"+file.getOriginalFilename();
+            sqlValues = xmlReader.display("ExcelFileReadConfig.xml");
 
-            FileInputStream excelFile = new FileInputStream(new File(DirFileLocation));
-            XSSFWorkbook workbook = new XSSFWorkbook(excelFile);
-            XSSFSheet sheet = workbook.getSheetAt(0);
+            String DirFilelocation = "upload-dir/"+file.getOriginalFilename();
 
+            FileInputStream excelFile = new FileInputStream(new File(DirFilelocation));
+            XSSFWorkbook xssfWorkbook = new XSSFWorkbook(excelFile);
+            XSSFSheet xssfSheet = xssfWorkbook.getSheetAt(0);
+
+            /**/
             Row row;
+            row = (Row)xssfSheet.getRow(0);
+            Iterator<Row> iterator = xssfSheet.iterator();
 
-            row = (Row)sheet.getRow(0);
-
-            /*Pick Relevant Columns*/
-            Iterator<Row> iterator = sheet.iterator();
-
-            int target_Name_CellNum = 0;
-            int target_Address_CellNum = 0;
-
-            int intcount = 0;
-            while (iterator.hasNext() && intcount < 1){
+            int intcounter = 0;
+            while (iterator.hasNext() && intcounter<1){
                 Row currentRow = iterator.next();
                 Iterator<Cell> cellIterator = currentRow.iterator();
 
-                while(cellIterator.hasNext()){
+                while (cellIterator.hasNext()){
                     Cell currentCell = cellIterator.next();
 
                     currentCell.getRow();
 
-                    myClass = xmlReader.display("ExcelFileReadConfig.xml");
+                    for (Object obj:sqlValues.getSqlExcelColumnArray()){
+                        if (obj.getClass() == String.class){
+                            if (obj.equals(currentCell.getStringCellValue())){
 
-                    System.out.println(currentCell.getStringCellValue());
-                    String targetCellName = currentCell.getStringCellValue();
-                    int targetCellNum = currentCell.getColumnIndex();
+                                targetCellNums.add(currentCell.getColumnIndex());
 
-                    String name_xml_feild =  myClass.getXml_name_feild();
-                    String address_xml_feild =  myClass.getXml_address_feild();
-
-                    if (targetCellName.equals(name_xml_feild)) {
-                        System.out.println("NameFeild = "+targetCellName+" #"+targetCellNum+" = "+name_xml_feild);
-                        target_Name_CellNum = targetCellNum;
-                    } else if (targetCellName.equals(address_xml_feild)){
-                        System.out.println("AddressFeild = "+targetCellName+" #"+targetCellNum+" = "+address_xml_feild);
-                        target_Address_CellNum = targetCellNum;
+                            }
+                        }
                     }
-                }
+                    //System.out.println("Target Cell Column Number "+targetCellNums);
 
-                intcount++;
+                }
+                intcounter++;
             }
             /**/
-
-            System.out.println("Name "+target_Name_CellNum);
-            System.out.println("Address "+target_Address_CellNum);
-            /*Pull From Relevant Columns*/
+            /**/
             Row row1;
 
-            for (int i=1; i<=sheet.getLastRowNum();i++){
-                row1 = (Row)sheet.getRow(i);
+            for (int i=1; i<=xssfSheet.getLastRowNum();i++){
 
+                row1 = (Row)xssfSheet.getRow(i);
 
+                Iterator iterator1 = targetCellNums.iterator();
+                //System.out.println("Arr No"+targetCellNums+" IT:"+i);
 
-                String farmer_name;
-                if (row1.getCell(target_Name_CellNum) == null){
-                    farmer_name = null;
-                } else {
-                    farmer_name = row1.getCell(target_Name_CellNum).toString();
+                StringBuilder strbuild = new StringBuilder();
+                strbuild.append("(");
+                int strcount = 0;
+                while (iterator1.hasNext()){
+
+                    if (strcount>0){
+                        strbuild.append(",");
+                    }
+
+                    Integer testNum = (Integer) iterator1.next();
+                    //System.out.println("NUM"+testNum);
+
+                    Integer rowNumValue = (Integer)testNum;
+                    if (row1.getCell(rowNumValue) == null){
+                        //System.out.println(row1.getCell(rowNumValue).toString());
+                        strbuild.append("null");
+                    } else {
+                        //System.out.println(row1.getCell(rowNumValue).toString());
+                        strbuild.append(row1.getCell(rowNumValue).toString());
+                    }
+                    strcount++;
                 }
+                strbuild.append(")");
 
-                String farmer_address;
-                if (row1.getCell(target_Address_CellNum) == null){
-                    farmer_address = null;
-                } else {
-                    farmer_address = row1.getCell(target_Address_CellNum).toString();
-                }
+                targetSqlScript.add(strbuild);
 
-                ExcelReader eReader = new ExcelReader();
-                eReader.setName(farmer_name);
-                eReader.setAddress(farmer_address);
-                excelReaderRepository.save(eReader);
+                //System.out.println(strbuild);
+                /***/
+
             }
-            excelFile.close();
 
+
+            //System.out.println("INSERT INTO "+sqlValues.getSqlTableName()+" "+sqlValues.getSqlColumns()+" VALUES ");
+            //System.out.println(targetSqlScript);
+
+            System.out.println("INSERT SQL SCRIPTS");
+
+            int targetNumCount = 1;
+            for (Object obj: targetSqlScript){
+                System.out.println(targetNumCount+": "+"INSERT INTO "+sqlValues.getSqlTableName()+" "+sqlValues.getSqlColumns()+" VALUES "+obj+";");
+
+                targetNumCount++;
+                /**/
+                //I would like to be able to execute the raw queries generated within this loop here if possible.
+                //The sout statement in this loop generates insert scripts
+                //to get a look at how the scripts appear upload the fisp excel file or any excel file
+                //in order to get out put if you are using an alternate excel file make required changes to xml file
+                /**/
+            }
+
+            /**/
         } catch (Exception e){
             e.printStackTrace();
         }
