@@ -10,6 +10,8 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.hibernate.*;
+import org.hibernate.cfg.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,6 +44,11 @@ public class WelcomeController {
 
     List<String> uploadfiles = new ArrayList<String>();
 
+    @Autowired
+    private SessionFactory sessionFactory;
+
+    private int results;
+
     @RequestMapping("/")
     public ModelAndView doHome(){
         ModelAndView homepage = new ModelAndView("index");
@@ -68,6 +75,13 @@ public class WelcomeController {
         ArrayList<Object> targetCellNames = new ArrayList<Object>();
         ArrayList<Object> targetSqlScript = new ArrayList<Object>();
         StringBuilder sqlExcelValues = new StringBuilder();
+
+        Session session;
+        try {
+            session = sessionFactory.getCurrentSession();
+        } catch (HibernateException e) {
+            session = sessionFactory.openSession();
+        }
 
         try {
             storageService.store(file);
@@ -122,12 +136,12 @@ public class WelcomeController {
                 //System.out.println("Arr No"+targetCellNums+" IT:"+i);
 
                 StringBuilder strbuild = new StringBuilder();
-                strbuild.append("(");
+                strbuild.append("(\"");
                 int strcount = 0;
                 while (iterator1.hasNext()){
 
                     if (strcount>0){
-                        strbuild.append(",");
+                        strbuild.append("\",\"");
                     }
 
                     Integer testNum = (Integer) iterator1.next();
@@ -143,33 +157,36 @@ public class WelcomeController {
                     }
                     strcount++;
                 }
-                strbuild.append(")");
+                strbuild.append("\")");
 
                 targetSqlScript.add(strbuild);
 
-                //System.out.println(strbuild);
-                /***/
 
             }
-
-
-            //System.out.println("INSERT INTO "+sqlValues.getSqlTableName()+" "+sqlValues.getSqlColumns()+" VALUES ");
-            //System.out.println(targetSqlScript);
 
             System.out.println("INSERT SQL SCRIPTS");
 
             int targetNumCount = 1;
             for (Object obj: targetSqlScript){
-                System.out.println(targetNumCount+": "+"INSERT INTO "+sqlValues.getSqlTableName()+" "+sqlValues.getSqlColumns()+" VALUES "+obj+";");
+                String sql = "INSERT INTO "+sqlValues.getSqlTableName()+" "+sqlValues.getSqlColumns()+" VALUES "+obj;
+                System.out.println(sql);
 
                 targetNumCount++;
-                /**/
-                //I would like to be able to execute the raw queries generated within this loop here if possible.
-                //The sout statement in this loop generates insert scripts
-                //to get a look at how the scripts appear upload the fisp excel file or any excel file
-                //in order to get out put if you are using an alternate excel file make required changes to xml file
-                /**/
+
+                try {
+
+                    SQLQuery query = session.createSQLQuery(sql);
+                    query.setResultTransformer(Criteria.ALIAS_TO_ENTITY_MAP);
+                    results = query.executeUpdate();
+
+
+                } catch (Throwable ex) {
+                    System.err.println("Failed to create sessionFactory object." + ex);
+                    throw new ExceptionInInitializerError(ex);
+                }
+
             }
+            System.out.println(results + " tables affected");
 
             /**/
         } catch (Exception e){

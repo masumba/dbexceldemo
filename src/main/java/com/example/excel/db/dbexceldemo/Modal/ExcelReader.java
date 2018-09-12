@@ -12,7 +12,7 @@ public class ExcelReader {
     @GeneratedValue(strategy = GenerationType.AUTO)
     public int id;
 
-    @Column(name = "name")
+    @Column(name = "first_name")
     public String name;
 
     @Column(name = "address")

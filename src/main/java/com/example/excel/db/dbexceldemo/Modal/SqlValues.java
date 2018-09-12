@@ -9,6 +9,8 @@ public class SqlValues {
 
     private ArrayList<Object> sqlValuesArray;
     private ArrayList<Object> sqlExcelColumnArray;
+    private ArrayList<String> columns;
+
     private StringBuilder sqlValues;
     private StringBuilder sqlColumns;
     private String sqlTableName;
@@ -81,5 +83,12 @@ public class SqlValues {
                 ", sqlTableName='" + sqlTableName + '\'' +
                 ", sqlStatmentString='" + sqlStatmentString + '\'' +
                 '}';
+    }
+
+
+    public String createJsonObject(){
+        Object object;
+
+        return "";
     }
 }

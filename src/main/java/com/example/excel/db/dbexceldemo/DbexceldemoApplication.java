@@ -6,6 +6,8 @@ import com.example.excel.db.dbexceldemo.Services.StorageService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.orm.jpa.vendor.HibernateJpaSessionFactoryBean;
 
 import javax.annotation.Resource;
 
@@ -18,6 +20,11 @@ public class DbexceldemoApplication implements CommandLineRunner {
 
     public static void main(String[] args){
         SpringApplication.run(DbexceldemoApplication.class, args);
+    }
+
+    @Bean
+    public HibernateJpaSessionFactoryBean sessionFactory() {
+        return new HibernateJpaSessionFactoryBean();
     }
 
     @Override

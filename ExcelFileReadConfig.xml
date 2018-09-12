@@ -2,21 +2,21 @@
 <ExcelUploads>
     <ExcelUpload>
         <Table tableName="excel_test">
-            <Column columnName="agro_block">
+            <!--<Column columnName="agro_block">
                 <ExcelValue>agri_block</ExcelValue>
-            </Column>
+            </Column>-->
             <Column columnName="address">
                 <ExcelValue>Province</ExcelValue>
             </Column>
             <Column columnName="first_name">
                 <ExcelValue>first_name</ExcelValue>
             </Column>
-            <Column columnName="name">
+            <Column columnName="last_name">
                 <ExcelValue>surname</ExcelValue>
             </Column>
-            <Column columnName="subprogram_code">
+            <!--<Column columnName="subprogram_code">
                 <ExcelValue>subprogram_code</ExcelValue>
-            </Column>
+            </Column>-->
         </Table>
     </ExcelUpload>
 </ExcelUploads>
