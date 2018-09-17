@@ -1,12 +1,10 @@
 package com.example.excel.db.dbexceldemo.Modal;
 
-
 import javax.persistence.*;
 
 @Entity
 @Table(name = "excel_test")
 public class ExcelReader {
-
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

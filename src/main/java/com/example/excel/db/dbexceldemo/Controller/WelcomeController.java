@@ -1,17 +1,15 @@
 package com.example.excel.db.dbexceldemo.Controller;
 
-
-import com.example.excel.db.dbexceldemo.Modal.ExcelReader;
-import com.example.excel.db.dbexceldemo.Modal.SqlValues;
-import com.example.excel.db.dbexceldemo.Modal.XMLReader;
+import com.example.excel.db.dbexceldemo.Configurations.SqlValues;
 import com.example.excel.db.dbexceldemo.Repository.ExcelReaderRepository;
 import com.example.excel.db.dbexceldemo.Services.StorageService;
+import com.example.excel.db.dbexceldemo.Services.XMLReader;
+import com.example.excel.db.dbexceldemo.Services.XMLWriter;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.hibernate.*;
-import org.hibernate.cfg.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,7 +27,6 @@ import java.util.List;
 @Controller
 public class WelcomeController {
 
-
     @Autowired
     SqlValues sqlValues;
 
@@ -37,26 +34,26 @@ public class WelcomeController {
     XMLReader xmlReader;
 
     @Autowired
+    XMLWriter xmlWriter;
+
+    @Autowired
     ExcelReaderRepository excelReaderRepository;
 
     @Autowired
     StorageService storageService;
 
-    List<String> uploadfiles = new ArrayList<String>();
+    List<String> uploodfiles = new ArrayList<String>();
 
     @Autowired
     private SessionFactory sessionFactory;
 
     private int results;
 
+    /**/
     @RequestMapping("/")
     public ModelAndView doHome(){
         ModelAndView homepage = new ModelAndView("index");
         homepage.addObject("lists",excelReaderRepository.findAll());
-        /**/
-        sqlValues = xmlReader.display("ExcelFileReadConfig.xml");
-        //System.out.println(sqlValues.getSqlTableName()+"/"+sqlValues.getSqlColumns()+"\n"+sqlValues.getSqlExcelColumnArray());
-        /**/
         return homepage;
     }
 
@@ -68,8 +65,12 @@ public class WelcomeController {
     }
 
     @RequestMapping(value = "/",method = RequestMethod.POST)
-    public ModelAndView doFileUpload(@RequestParam("file")MultipartFile file){
+    public ModelAndView doFormCollect(@RequestParam("clmnName") String clmnName,@RequestParam("ExcelValue") List<String> ExcelValue,@RequestParam(value = "my-checkbox", defaultValue = "off") List<String> optionCheckbox,@RequestParam("columnName") List<String> xmlColumnName,@RequestParam("file")MultipartFile file){
         ModelAndView mv = new ModelAndView("redirect:/");
+
+        sqlValues = xmlWriter.xmlCreate(clmnName,ExcelValue,optionCheckbox,xmlColumnName);
+
+        String xmlLocation = sqlValues.getSqlXmlLocation();
 
         ArrayList<Object> targetCellNums = new ArrayList<Object>();
         ArrayList<Object> targetCellNames = new ArrayList<Object>();
@@ -79,23 +80,19 @@ public class WelcomeController {
         Session session;
         try {
             session = sessionFactory.getCurrentSession();
-        } catch (HibernateException e) {
+        } catch (HibernateException e){
             session = sessionFactory.openSession();
         }
 
         try {
             storageService.store(file);
-            uploadfiles.add(file.getOriginalFilename());
-
-            sqlValues = xmlReader.display("ExcelFileReadConfig.xml");
-
+            uploodfiles.add(file.getOriginalFilename());
+            sqlValues = xmlReader.display(xmlLocation);
             String DirFilelocation = "upload-dir/"+file.getOriginalFilename();
-
             FileInputStream excelFile = new FileInputStream(new File(DirFilelocation));
             XSSFWorkbook xssfWorkbook = new XSSFWorkbook(excelFile);
             XSSFSheet xssfSheet = xssfWorkbook.getSheetAt(0);
 
-            /**/
             Row row;
             row = (Row)xssfSheet.getRow(0);
             Iterator<Row> iterator = xssfSheet.iterator();
@@ -107,88 +104,92 @@ public class WelcomeController {
 
                 while (cellIterator.hasNext()){
                     Cell currentCell = cellIterator.next();
-
                     currentCell.getRow();
 
                     for (Object obj:sqlValues.getSqlExcelColumnArray()){
                         if (obj.getClass() == String.class){
                             if (obj.equals(currentCell.getStringCellValue())){
-
                                 targetCellNums.add(currentCell.getColumnIndex());
-
+                            }
+                        } else if (obj.getClass() == Integer.class){
+                            if (obj.equals(currentCell.getNumericCellValue())){
+                                targetCellNums.add(currentCell.getColumnIndex());
                             }
                         }
                     }
-                    //System.out.println("Target Cell Column Number "+targetCellNums);
-
                 }
                 intcounter++;
             }
             /**/
+            Row row2;
+            for (int i=1;i<=1;i++){
+                row2 = (Row)xssfSheet.getRow(0);
+                Iterator iterator2 = targetCellNums.iterator();
+                int int_counter = 0;
+                while (iterator2.hasNext()){
+                    Integer columnNumValue = (Integer)iterator2.next();
+
+                    if (row2.getCell(columnNumValue) == null){
+                        targetCellNames.add("Null");
+                    } else {
+                        targetCellNames.add(row2.getCell(columnNumValue).toString());
+                    }
+                    int_counter++;
+
+                }
+            }
+
+
+
+            //System.out.println("testing = "+targetCellNames);
+            sqlValues.setSqlExcelFileColumnOrder(targetCellNames);
+
+            sqlValues = xmlReader.DB_Columns(xmlLocation);
+
+
             /**/
+
             Row row1;
-
             for (int i=1; i<=xssfSheet.getLastRowNum();i++){
-
                 row1 = (Row)xssfSheet.getRow(i);
-
                 Iterator iterator1 = targetCellNums.iterator();
-                //System.out.println("Arr No"+targetCellNums+" IT:"+i);
-
-                StringBuilder strbuild = new StringBuilder();
-                strbuild.append("(\"");
+                StringBuilder strBuild = new StringBuilder();
+                strBuild.append("(\"");
                 int strcount = 0;
                 while (iterator1.hasNext()){
-
                     if (strcount>0){
-                        strbuild.append("\",\"");
+                        strBuild.append("\",\"");
                     }
-
-                    Integer testNum = (Integer) iterator1.next();
-                    //System.out.println("NUM"+testNum);
+                    Integer testNum = (Integer)iterator1.next();
 
                     Integer rowNumValue = (Integer)testNum;
                     if (row1.getCell(rowNumValue) == null){
-                        //System.out.println(row1.getCell(rowNumValue).toString());
-                        strbuild.append("null");
+                        strBuild.append("null");
                     } else {
-                        //System.out.println(row1.getCell(rowNumValue).toString());
-                        strbuild.append(row1.getCell(rowNumValue).toString());
+                        strBuild.append(row1.getCell(rowNumValue).toString());
                     }
                     strcount++;
                 }
-                strbuild.append("\")");
-
-                targetSqlScript.add(strbuild);
-
-
+                strBuild.append("\")");
+                targetSqlScript.add(strBuild);
             }
-
-            System.out.println("INSERT SQL SCRIPTS");
 
             int targetNumCount = 1;
             for (Object obj: targetSqlScript){
                 String sql = "INSERT INTO "+sqlValues.getSqlTableName()+" "+sqlValues.getSqlColumns()+" VALUES "+obj;
-                System.out.println(sql);
 
+                System.out.println("---Test---SQL :"+sql);
                 targetNumCount++;
 
                 try {
-
                     SQLQuery query = session.createSQLQuery(sql);
                     query.setResultTransformer(Criteria.ALIAS_TO_ENTITY_MAP);
                     results = query.executeUpdate();
-
-
-                } catch (Throwable ex) {
-                    System.err.println("Failed to create sessionFactory object." + ex);
+                } catch (Throwable ex){
                     throw new ExceptionInInitializerError(ex);
                 }
-
             }
-            System.out.println(results + " tables affected");
 
-            /**/
         } catch (Exception e){
             e.printStackTrace();
         }
@@ -196,5 +197,105 @@ public class WelcomeController {
         return mv;
     }
 
+    @RequestMapping(value = "/test",method = RequestMethod.POST)
+    public ModelAndView doFileUpload(@RequestParam("file")MultipartFile file){
+        ModelAndView mv = new ModelAndView("redirect:/");
 
+        ArrayList<Object> targetCellNumsArray = new ArrayList<Object>();
+        ArrayList<Object> targetCellNamesArray = new ArrayList<Object>();
+        ArrayList<Object> targetSqlScripts = new ArrayList<Object>();
+        StringBuilder sqlExcelValues = new StringBuilder();
+
+        Session session;
+
+        try {
+            session = sessionFactory.getCurrentSession();
+        } catch (HibernateException e){
+            session = sessionFactory.openSession();
+        }
+
+        try {
+            storageService.store(file);
+            uploodfiles.add(file.getOriginalFilename());
+            sqlValues = xmlReader.display("ExcelFileReadConfig.xml");
+            String DirFilelocation = "upload-dir/"+file.getOriginalFilename();
+            FileInputStream excelFile = new FileInputStream(new File(DirFilelocation));
+            XSSFWorkbook xssfWorkbook = new XSSFWorkbook(excelFile);
+            XSSFSheet xssfSheet = xssfWorkbook.getSheetAt(0);
+
+            /**/
+            Row row;
+            row = (Row)xssfSheet.getRow(0);
+            Iterator<Row> iterator = xssfSheet.iterator();
+            int int_counter = 0;
+
+            while (iterator.hasNext() && int_counter<1){
+                Row currentRow = iterator.next();
+                Iterator<Cell> cellIterator = currentRow.iterator();
+
+                while (cellIterator.hasNext()){
+                    Cell currentCell = cellIterator.next();
+
+                    currentCell.getRow();
+
+                    for (Object obj:sqlValues.getSqlExcelColumnArray()){
+                        if (obj.getClass()==String.class){
+                            if (obj.equals(currentCell.getStringCellValue())){
+                                targetCellNamesArray.add(currentCell.getColumnIndex());
+                            }
+                        }
+                    }
+                }
+                int_counter++;
+            }
+            /**/
+
+            /**/
+            Row row1;
+            for (int i=1;i<xssfSheet.getLastRowNum();i++){
+                row1 = (Row)xssfSheet.getRow(i);
+                Iterator iterator1 = targetCellNumsArray.iterator();
+                StringBuilder strBuilder = new StringBuilder();
+
+                strBuilder.append("\"");
+                int str_count = 0;
+                while (iterator1.hasNext()){
+                    /*Will Have to look further here Possible Bug*/
+                    if (str_count>0){
+                        strBuilder.append("\",\"");
+                    }
+
+                    Integer testNum = (Integer)iterator1.next();
+                    Integer rowNumValue = (Integer)testNum;
+                    if (row1.getCell(rowNumValue)==null){
+                        strBuilder.append("null");
+                    } else{
+                        strBuilder.append(row1.getCell(rowNumValue).toString());
+                    }
+                    str_count++;
+                }
+                strBuilder.append("\")");
+                targetSqlScripts.add(strBuilder);
+            }
+            int targetNumCount = 1;
+            for (Object obj:targetSqlScripts){
+                String sql = "INSERT INTO "+sqlValues.getSqlTableName()+" "+sqlValues.getSqlColumns()+" VALUES "+obj;
+
+                targetNumCount++;
+                try{
+                    SQLQuery query = session.createSQLQuery(sql);
+                    query.setResultTransformer(Criteria.ALIAS_TO_ENTITY_MAP);
+                    results = query.executeUpdate();
+                } catch (Throwable ex){
+                    throw new ExceptionInInitializerError(ex);
+                }
+            }
+            /**/
+
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return mv;
+    }
 }

@@ -18,12 +18,12 @@ import java.nio.file.Paths;
 @Service
 public class StorageService {
 
-    Logger log = LoggerFactory.getLogger(this.getClass().getName());
-    private final Path rootLocation = Paths.get("upload-dir");
+    Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+    private final Path uploadsRootLocation = Paths.get("upload-dir");
 
     public void store(MultipartFile file){
         try{
-            Files.copy(file.getInputStream(), this.rootLocation.resolve(file.getOriginalFilename()));
+            Files.copy(file.getInputStream(), this.uploadsRootLocation.resolve(file.getOriginalFilename()));
         } catch (Exception e){
             throw new RuntimeException("Fail! Service Error: "+e);
         }
@@ -31,25 +31,25 @@ public class StorageService {
 
     public Resource loadFile(String filename){
         try {
-            Path file = rootLocation.resolve(filename);
+            Path file = uploadsRootLocation.resolve(filename);
             Resource resource = new UrlResource(file.toUri());
-            if (((UrlResource) resource).exists() || ((UrlResource) resource).isReadable()){
+            if (((UrlResource) resource).exists() || ((UrlResource)resource).isReadable()){
                 return resource;
             } else {
                 throw new RuntimeException("Failed to load file!");
             }
         } catch (MalformedURLException e){
-            throw new RuntimeException("Fail Load Error: "+e);
+            throw new RuntimeException("Failed to Load FILE Error: "+e);
         }
     }
 
     public void deleteAll(){
-        FileSystemUtils.deleteRecursively(rootLocation.toFile());
+        FileSystemUtils.deleteRecursively(uploadsRootLocation.toFile());
     }
 
     public void init(){
-        try{
-            Files.createDirectory(rootLocation);
+        try {
+            Files.createDirectory(uploadsRootLocation);
         } catch (IOException e){
             throw new RuntimeException("Could Not Create Storage: "+e);
         }

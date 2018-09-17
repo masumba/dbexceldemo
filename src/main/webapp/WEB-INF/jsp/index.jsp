@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="assets/css/jquery.bootgrid.css">
     <link rel="stylesheet" href="assets/css/styles.css">
+    <link href="assets/css/bootstrap-switch.css" rel="stylesheet">
+
 </head>
 
 <body>
@@ -21,7 +23,29 @@
         </div>
         </div>
     </nav>
+    <!--*+*-->
+        <div class="container">
+            <form method="POST" action="" enctype="multipart/form-data">
+                <div class="form-group">
+                    <select class="form-control" name="tblName" id="dblist">
+                        <option value="">Select A Database</option>
+                    </select>
+                </div>
+
+                    <div id="show_product"></div>
+
+
+                <div class="form-group">
+                    <button type="Submit" class="btn btn-default btn-block" type="button">Save</button>
+                    <button type="Reset" class="btn btn-default btn-block" type="button">Reset</button>
+                </div>
+            </form>
+        </div>
+    <!--*+*-->
     <div>
+        <!--*-->
+
+        <!--*-->
         <div class="container">
             <h3 class="text-center">${message}</h3>
             <div class="row">
@@ -59,10 +83,54 @@
             </div>
         </div>
     </div>
+    <div>
+
+    </div>
     <script src="assets/js/jquery.min.js"></script>
     <script src="assets/bootstrap/js/bootstrap.min.js"></script>
     <script src="assets/js/jquery.bootgrid.js"></script>
     <script src="assets/js/Bootgridlauncher.js"></script>
+    <script src="assets/js/jquery.2.2.0.min.js"></script>
+    <script src="assets/js/bootstrap-switch.js"></script>
+ <script>
+ $(document).ready(function(){
+      $('#dblist').change(function(){
+           var tblName = $(this).val();
+           $.ajax({
+                url:"http://localhost:8080/tables-for",
+                method:"POST",
+                data:{tblName:tblName},
+                success:function(data){
+                     $('#show_product').html(data);
+                }
+           });
+      });
+
+ });
+
+/**/
+function load_unseen_notification(dblist = ''){
+  $.ajax({
+    url:"http://localhost:8080/databases",
+    method:"POST",
+    data:{dblist:dblist},
+    success:function(data){
+      $('#dblist').html(data);
+    }
+  })
+}
+
+load_unseen_notification();
+
+
+setInterval(function(){
+  load_unseen_notification();
+}, 300000);
+
+      /**/
+
+ </script>
+
 </body>
 
 </html>
