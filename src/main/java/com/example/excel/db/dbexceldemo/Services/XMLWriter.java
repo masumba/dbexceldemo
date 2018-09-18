@@ -26,6 +26,8 @@ public class XMLWriter {
 
     public SqlValues xmlCreate(String targetDbTableName, List targetExcelColumnName,List targetXMLFieldState,List targetDbColumnName){
 
+        System.out.println(targetExcelColumnName);
+
         String xmlFileLocation = "ConfigurationTest.xml";
         Element xmlColumn = null;
 

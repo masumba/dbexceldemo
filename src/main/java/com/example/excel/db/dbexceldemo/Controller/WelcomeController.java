@@ -68,6 +68,11 @@ public class WelcomeController {
     public ModelAndView doFormCollect(@RequestParam("clmnName") String clmnName,@RequestParam("ExcelValue") List<String> ExcelValue,@RequestParam(value = "my-checkbox", defaultValue = "off") List<String> optionCheckbox,@RequestParam("columnName") List<String> xmlColumnName,@RequestParam("file")MultipartFile file){
         ModelAndView mv = new ModelAndView("redirect:/");
 
+        System.out.println(clmnName);
+        System.out.println(ExcelValue);
+        System.out.println(optionCheckbox);
+        System.out.println(xmlColumnName);
+
         sqlValues = xmlWriter.xmlCreate(clmnName,ExcelValue,optionCheckbox,xmlColumnName);
 
         String xmlLocation = sqlValues.getSqlXmlLocation();
