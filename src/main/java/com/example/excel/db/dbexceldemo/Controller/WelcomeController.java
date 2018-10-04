@@ -20,6 +20,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -183,12 +184,14 @@ public class WelcomeController {
             for (Object obj: targetSqlScript){
                 String sql = "INSERT INTO "+sqlValues.getSqlTableName()+" "+sqlValues.getSqlColumns()+" VALUES "+obj;
 
+
                 System.out.println("---Test---SQL :"+sql);
                 targetNumCount++;
 
                 try {
                     SQLQuery query = session.createSQLQuery(sql);
                     query.setResultTransformer(Criteria.ALIAS_TO_ENTITY_MAP);
+
                     results = query.executeUpdate();
                 } catch (Throwable ex){
                     throw new ExceptionInInitializerError(ex);
